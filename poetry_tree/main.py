@@ -1,7 +1,8 @@
 import numpy as np
 from sklearn.datasets import load_digits
 from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.metrics import accuracy_score  # , mean_squared_error
+from sklearn.metrics import accuracy_score, mean_squared_error
+import pandas as pd
 from tree import *
 
 """#### Simple check"""
@@ -95,58 +96,58 @@ plt.show()
 
 """#### Regression problem"""
 
-# data_url = "http://lib.stat.cmu.edu/datasets/boston"
-# raw_df = pd.read_csv(data_url, sep="\s+", skiprows=22, header=None)
-# regr_data = np.hstack([raw_df.values[::2, :], raw_df.values[1::2, :2]])
-# regr_target = raw_df.values[1::2, 2]
+data_url = "http://lib.stat.cmu.edu/datasets/boston"
+raw_df = pd.read_csv(data_url, sep="\s+", skiprows=22, header=None)
+regr_data = np.hstack([raw_df.values[::2, :], raw_df.values[1::2, :2]])
+regr_target = raw_df.values[1::2, 2]
 
-# # regr_data = load_boston().data
-# regr_target = regr_target[
-#     :, None
-# ]  # to make the targets consistent with our model interfaces
-# RX_train, RX_test, Ry_train, Ry_test = train_test_split(
-#     regr_data, regr_target, test_size=0.2, random_state=RANDOM_STATE
-# )
+# regr_data = load_boston().data
+regr_target = regr_target[
+    :, None
+]  # to make the targets consistent with our model interfaces
+RX_train, RX_test, Ry_train, Ry_test = train_test_split(
+    regr_data, regr_target, test_size=0.2, random_state=RANDOM_STATE
+)
 
-# regressor = DecisionTree(max_depth=10, criterion_name="mad_median")
-# regressor.fit(RX_train, Ry_train)
-# predictions_mad = regressor.predict(RX_test)
-# mse_mad = mean_squared_error(Ry_test, predictions_mad)
-# print(mse_mad)
+regressor = DecisionTree(max_depth=10, criterion_name="mad_median")
+regressor.fit(RX_train, Ry_train)
+predictions_mad = regressor.predict(RX_test)
+mse_mad = mean_squared_error(Ry_test, predictions_mad)
+print(mse_mad)
 
-# regressor = DecisionTree(max_depth=10, criterion_name="variance")
-# regressor.fit(RX_train, Ry_train)
-# predictions_mad = regressor.predict(RX_test)
-# mse_var = mean_squared_error(Ry_test, predictions_mad)
-# print(mse_var)
+regressor = DecisionTree(max_depth=10, criterion_name="variance")
+regressor.fit(RX_train, Ry_train)
+predictions_mad = regressor.predict(RX_test)
+mse_var = mean_squared_error(Ry_test, predictions_mad)
+print(mse_var)
 
-# assert 9 < mse_mad < 20
-# assert 8 < mse_var < 12
+assert 9 < mse_mad < 20
+assert 8 < mse_var < 12
 
-# param_grid_R = {"max_depth": range(2, 9), "criterion_name": ["variance", "mad_median"]}
+param_grid_R = {"max_depth": range(2, 9), "criterion_name": ["variance", "mad_median"]}
 
-# gs_R = GridSearchCV(
-#     DecisionTree(),
-#     param_grid=param_grid_R,
-#     cv=5,
-#     scoring="neg_mean_squared_error",
-#     n_jobs=-2,
-# )
-# gs_R.fit(RX_train, Ry_train)
+gs_R = GridSearchCV(
+    DecisionTree(),
+    param_grid=param_grid_R,
+    cv=5,
+    scoring="neg_mean_squared_error",
+    n_jobs=-2,
+)
+gs_R.fit(RX_train, Ry_train)
 
-# gs_R.best_params_
+gs_R.best_params_
 
-# assert gs_R.best_params_["criterion_name"] == "mad_median"
-# assert 3 < gs_R.best_params_["max_depth"] < 7
+assert gs_R.best_params_["criterion_name"] == "mad_median"
+assert 3 < gs_R.best_params_["max_depth"] < 7
 
-# var_scores = gs_R.cv_results_["mean_test_score"][:7]
-# mad_scores = gs_R.cv_results_["mean_test_score"][7:]
+var_scores = gs_R.cv_results_["mean_test_score"][:7]
+mad_scores = gs_R.cv_results_["mean_test_score"][7:]
 
-# plt.figure(figsize=(10, 8))
-# plt.title("The dependence of neg_mse on the depth of the tree")
-# plt.plot(np.arange(2, 9), var_scores, label="variance")
-# plt.plot(np.arange(2, 9), mad_scores, label="mad_median")
-# plt.legend(fontsize=11, loc=1)
-# plt.xlabel("max_depth")
-# plt.ylabel("neg_mse")
-# plt.show()
+plt.figure(figsize=(10, 8))
+plt.title("The dependence of neg_mse on the depth of the tree")
+plt.plot(np.arange(2, 9), var_scores, label="variance")
+plt.plot(np.arange(2, 9), mad_scores, label="mad_median")
+plt.legend(fontsize=11, loc=1)
+plt.xlabel("max_depth")
+plt.ylabel("neg_mse")
+plt.show()
