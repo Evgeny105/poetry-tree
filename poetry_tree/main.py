@@ -4,6 +4,7 @@ from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import accuracy_score, mean_squared_error
 import pandas as pd
 from tree import *
+import pickle
 
 """#### Simple check"""
 
@@ -34,6 +35,10 @@ assert len(y_train.shape) == 2 and y_train.shape[0] == len(X_train)
 
 class_estimator = DecisionTree(max_depth=10, criterion_name="gini")
 class_estimator.fit(X_train, y_train)
+
+with open("data.pickle", "wb") as f:
+    pickle.dump(class_estimator, f)
+
 ans = class_estimator.predict(X_test)
 accuracy_gini = accuracy_score(y_test, ans)
 print(accuracy_gini)
