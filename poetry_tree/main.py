@@ -1,11 +1,12 @@
-import numpy as np
-from sklearn.datasets import load_digits
-from sklearn.model_selection import train_test_split, GridSearchCV
-from sklearn.metrics import accuracy_score, mean_squared_error
-import pandas as pd
-from tree import *
-
 import pickle
+
+import numpy as np
+import pandas as pd
+from matplotlib import pyplot as plt
+from sklearn.datasets import load_digits
+from sklearn.metrics import accuracy_score, mean_squared_error
+from sklearn.model_selection import GridSearchCV, train_test_split
+from tree import DecisionTree
 
 """#### Simple check"""
 
@@ -68,13 +69,17 @@ print(accuracy_entropy)
 assert 0.84 < accuracy_gini < 0.9
 assert 0.86 < accuracy_entropy < 0.9
 assert (
-    np.sum(np.abs(class_estimator.predict_proba(X_test).mean(axis=0) - reference))
+    np.sum(
+        np.abs(class_estimator.predict_proba(X_test).mean(axis=0) - reference)
+    )
     < 1e-4
 )
 
 np.sum(np.abs(class_estimator.predict_proba(X_test).mean(axis=0) - reference))
 
-"""Let's use 5-fold cross validation (`GridSearchCV`) to find optimal values for `max_depth` and `criterion` hyperparameters."""
+"""Let's use 5-fold cross validation (`GridSearchCV`)
+to find optimal values
+for `max_depth` and `criterion` hyperparameters."""
 
 param_grid = {"max_depth": range(3, 11), "criterion_name": ["gini", "entropy"]}
 gs = GridSearchCV(
@@ -93,7 +98,9 @@ assert 6 < gs.best_params_["max_depth"] < 9
 plt.figure(figsize=(10, 8))
 plt.title("The dependence of quality on the depth of the tree")
 plt.plot(np.arange(3, 11), gs.cv_results_["mean_test_score"][:8], label="Gini")
-plt.plot(np.arange(3, 11), gs.cv_results_["mean_test_score"][8:], label="Entropy")
+plt.plot(
+    np.arange(3, 11), gs.cv_results_["mean_test_score"][8:], label="Entropy"
+)
 plt.legend(fontsize=11, loc=1)
 plt.xlabel("max_depth")
 plt.ylabel("accuracy")
@@ -103,7 +110,7 @@ plt.show()
 """#### Regression problem"""
 
 data_url = "http://lib.stat.cmu.edu/datasets/boston"
-raw_df = pd.read_csv(data_url, sep="\s+", skiprows=22, header=None)
+raw_df = pd.read_csv(data_url, sep=r"\s+", skiprows=22, header=None)
 regr_data = np.hstack([raw_df.values[::2, :], raw_df.values[1::2, :2]])
 regr_target = raw_df.values[1::2, 2]
 
@@ -130,7 +137,10 @@ print(mse_var)
 assert 9 < mse_mad < 20
 assert 8 < mse_var < 12
 
-param_grid_R = {"max_depth": range(2, 9), "criterion_name": ["variance", "mad_median"]}
+param_grid_R = {
+    "max_depth": range(2, 9),
+    "criterion_name": ["variance", "mad_median"],
+}
 
 gs_R = GridSearchCV(
     DecisionTree(),
