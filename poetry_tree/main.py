@@ -10,7 +10,7 @@ from sklearn.model_selection import GridSearchCV, train_test_split
 from tree import DecisionTree
 
 
-"""#### Simple check"""
+"""### Simple check"""
 
 RANDOM_STATE = 42
 
