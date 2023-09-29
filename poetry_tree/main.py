@@ -8,6 +8,7 @@ from sklearn.metrics import accuracy_score, mean_squared_error
 from sklearn.model_selection import GridSearchCV, train_test_split
 from tree import DecisionTree
 
+
 """#### Simple check"""
 
 RANDOM_STATE = 42
