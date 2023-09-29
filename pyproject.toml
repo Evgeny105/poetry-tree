@@ -24,6 +24,8 @@ max-line-length = 130
 line-length = 80
 
 [tool.isort]
+src_paths = ["poetry_tree"]
+profile = "black"
 line_length = 80
 lines_after_imports = 2
 
