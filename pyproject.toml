@@ -19,6 +19,7 @@ pre-commit = "^3.4.0"
 
 [tool.flake8]
 max-line-length = 130
+ignore = ["E501", "W503"]
 
 [tool.black]
 line-length = 80

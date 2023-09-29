@@ -30,8 +30,7 @@ from sklearn.base import BaseEstimator
 """Let's fix the `random_state` (a.k.a. random seed)."""
 
 
-r"""__Your ultimate task for today is to impement the `DecisionTree` class and
-use it to solve classification and regression problems.__
+r"""__Your ultimate task for today is to impement the `DecisionTree` class and use it to solve classification and regression problems.__
 
 __Specifications:__
 - The class inherits from `sklearn.BaseEstimator`;
