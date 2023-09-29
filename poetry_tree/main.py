@@ -6,6 +6,7 @@ from matplotlib import pyplot as plt
 from sklearn.datasets import load_digits
 from sklearn.metrics import accuracy_score, mean_squared_error
 from sklearn.model_selection import GridSearchCV, train_test_split
+
 from tree import DecisionTree
 
 
