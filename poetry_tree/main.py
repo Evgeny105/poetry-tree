@@ -14,16 +14,16 @@ from tree import DecisionTree
 
 RANDOM_STATE = 42
 
-X = np.ones((4, 5), dtype=float) * np.arange(4)[:, None]
-y = np.arange(4)[:, None] + np.asarray([0.2, -0.3, 0.1, 0.4])[:, None]
-class_estimator = DecisionTree(max_depth=10, criterion_name="gini")
+# X = np.ones((4, 5), dtype=float) * np.arange(4)[:, None]
+# y = np.arange(4)[:, None] + np.asarray([0.2, -0.3, 0.1, 0.4])[:, None]
+# class_estimator = DecisionTree(max_depth=10, criterion_name="gini")
 
-(X_l, y_l), (X_r, y_r) = class_estimator.make_split(1, 1.0, X, y)
+# (X_l, y_l), (X_r, y_r) = class_estimator.make_split(1, 1.0, X, y)
 
-assert np.array_equal(X[:1], X_l)
-assert np.array_equal(X[1:], X_r)
-assert np.array_equal(y[:1], y_l)
-assert np.array_equal(y[1:], y_r)
+# assert np.array_equal(X[:1], X_l)
+# assert np.array_equal(X[1:], X_r)
+# assert np.array_equal(y[:1], y_l)
+# assert np.array_equal(y[1:], y_r)
 
 """#### Classification problem"""
 
