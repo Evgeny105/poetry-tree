@@ -3,7 +3,7 @@ import pickle
 from sklearn.datasets import load_digits
 from sklearn.model_selection import train_test_split
 
-from tree import DecisionTree
+from poetry_tree.tree import DecisionTree
 
 
 if __name__ == "__main__":
