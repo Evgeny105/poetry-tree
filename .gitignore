@@ -1,2 +1,4 @@
 poetry_tree/__pycache__/tree.cpython-311.pyc
 poetry_tree/main.py
+data.pickle
+results.csv
