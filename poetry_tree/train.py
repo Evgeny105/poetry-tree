@@ -3,7 +3,7 @@ import pickle
 from sklearn.datasets import load_digits
 from sklearn.model_selection import train_test_split
 
-from tree import DecisionTree
+from .tree import DecisionTree
 
 
 def main():
@@ -16,6 +16,7 @@ def main():
     )
 
     class_estimator = DecisionTree(max_depth=10, criterion_name="gini")
+    print("fit...")
     class_estimator.fit(X_train, y_train)
 
     with open("data.pickle", "wb") as f:
