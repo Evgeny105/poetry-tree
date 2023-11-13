@@ -55,7 +55,7 @@ subsets defined by the split $x^{(j)} < t$.
     use the natural logarithm).
 
 2. Regression. Let $y_l$ be the target value for the $R$, $\mathbf{y} = (y_1,
-\dots, y_N)$ – all targets for the selected dataset $X$.
+\dots, y_N)$ - all targets for the selected dataset $X$.
 
     * `variance`: $$H(R) = \dfrac{1}{|R|} \sum_{y_j \in R}(y_j - \text{mean}
     (\mathbf{y}))^2$$

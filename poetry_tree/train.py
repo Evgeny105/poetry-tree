@@ -3,10 +3,10 @@ import pickle
 from sklearn.datasets import load_digits
 from sklearn.model_selection import train_test_split
 
-from poetry_tree.tree import DecisionTree
+from tree import DecisionTree
 
 
-if __name__ == "__main__":
+def main():
     RANDOM_STATE = 42
 
     digits_data = load_digits().data
@@ -20,3 +20,7 @@ if __name__ == "__main__":
 
     with open("data.pickle", "wb") as f:
         pickle.dump(class_estimator, f)
+
+
+if __name__ == "__main__":
+    main()

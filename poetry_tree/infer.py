@@ -6,7 +6,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 
 
-if __name__ == "__main__":
+def main():
     RANDOM_STATE = 42
 
     digits_data = load_digits().data
@@ -29,3 +29,7 @@ if __name__ == "__main__":
         writer.writeheader()
         for ref, ans in zip(y_test, answer):
             writer.writerow({"reference": ref[0], "answer": ans})
+
+
+if __name__ == "__main__":
+    main()
