@@ -1,0 +1,11 @@
+model:
+  path: "models\\data.pickle"
+
+train:
+  criterion_name: "entropy"
+  max_depth: 10
+  random_state: 42
+
+infer:
+  result_csv_path: "results\\result.csv"
+  criterion_name: "${train.criterion_name}"

@@ -1,5 +1,5 @@
 poetry_tree/__pycache__/*
 poetry_tree/main.py
 data.pickle
-results.csv
 .venv/*
+outputs/*
