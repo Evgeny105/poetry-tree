@@ -19,7 +19,7 @@ def main():
     print("fit...")
     class_estimator.fit(X_train, y_train)
 
-    with open("data.pickle", "wb") as f:
+    with open(r"models\data.pickle", "wb") as f:
         pickle.dump(class_estimator, f)
 
 
