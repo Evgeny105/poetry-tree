@@ -15,7 +15,7 @@ def main():
         digits_data, digits_target, test_size=0.2, random_state=RANDOM_STATE
     )
 
-    class_estimator = DecisionTree(max_depth=10, criterion_name="gini")
+    class_estimator = DecisionTree(max_depth=10, criterion_name="entropy")
     print("fit...")
     class_estimator.fit(X_train, y_train)
 
