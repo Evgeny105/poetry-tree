@@ -4,7 +4,7 @@ model:
 train:
   criterion_name: "entropy"
   max_depth: 10
-  random_state: 42
+  random_state: 42 # null for None
 
 infer:
   result_csv_path: "results\\result.csv"

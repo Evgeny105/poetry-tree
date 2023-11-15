@@ -2,16 +2,25 @@ import csv
 import pickle
 
 import hydra
-from omegaconf import DictConfig
+from hydra.core.config_store import ConfigStore
 from sklearn.datasets import load_digits
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 
 
+try:
+    from .config import Params
+except ImportError:
+    from poetry_tree.config import Params
+
+cs = ConfigStore.instance()
+cs.store(name="params", node=Params)
+
+
 @hydra.main(
     version_base="1.3.2", config_path="..\\config", config_name="config"
 )
-def main(cfg: DictConfig):
+def main(cfg: Params):
     RANDOM_STATE = cfg.train.random_state
 
     digits_data = load_digits().data
