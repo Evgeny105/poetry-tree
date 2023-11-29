@@ -1,6 +1,7 @@
 import csv
 import pickle
 
+import dvc.api
 import hydra
 from hydra.core.config_store import ConfigStore
 from sklearn.datasets import load_digits
@@ -29,7 +30,7 @@ def main(cfg: Params):
         digits_data, digits_target, test_size=0.2, random_state=RANDOM_STATE
     )
 
-    with open(cfg.model.path, "rb") as f:
+    with dvc.api.open(cfg.model.path, mode="rb") as f:
         class_estimator = pickle.load(f)
 
     answer = class_estimator.predict(X_test)

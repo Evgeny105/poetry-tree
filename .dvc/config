@@ -3,3 +3,4 @@
     remote = myremote
 ['remote "myremote"']
     url = gdrive://1M4Fe8nT36ufluQJB-IRDCHz03aB7iOoc
+# DVC GoogleDrive https://drive.google.com/drive/folders/1M4Fe8nT36ufluQJB-IRDCHz03aB7iOoc?usp=sharing
