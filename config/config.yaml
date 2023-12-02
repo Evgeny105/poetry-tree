@@ -17,10 +17,7 @@ train:
   learning_rate: 0.0005
   n_epochs: 2
   clip_grad: 1.0
-  # criterion_name: "entropy"
-  # max_depth: 10
 
 infer:
   random_state: 42 # or null for None
-  # result_csv_path: "results\\result.csv"
   # criterion_name: "${train.criterion_name}"

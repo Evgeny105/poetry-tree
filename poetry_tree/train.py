@@ -10,34 +10,28 @@ import hydra
 import spacy
 import torch
 import torch.nn as nn
-
-# from sklearn.datasets import load_digits
-# from sklearn.model_selection import train_test_split
 import torchdata.datapipes as dp
 import torchtext.transforms as T
 from hydra.core.config_store import ConfigStore
 from spacy_download import load_spacy
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader, Sampler
-
-# from torchtext.data.metrics import bleu_score
+from torchtext.data.metrics import bleu_score
 from torchtext.vocab import build_vocab_from_iterator
 
-# from tree import DecisionTree
-from transformer import Decoder, Encoder, Seq2Seq
+from poetry_tree.config import Params  # работает при запуске train.py
+
+# работает при запуске train.py
+from poetry_tree.transformer import Decoder, Encoder, Seq2Seq
 
 
 # try:
-#     from .tree import DecisionTree
+#     from config import Params
 # except ImportError:
-#     from poetry_tree.tree import DecisionTree
-try:
-    from config import Params
-except ImportError:
-    try:
-        from .config import Params
-    except ImportError:
-        from poetry_tree.config import Params
+#     try:
+#         from .config import Params
+#     except ImportError:
+#         from poetry_tree.config import Params
 
 cs = ConfigStore.instance()
 cs.store(name="params", node=Params)
@@ -174,36 +168,6 @@ class collate_batch(object):
         ), pad_sequence(rus_list, padding_value=rus_vocab["<pad>"])
 
 
-# def collate_batch(
-#     batch,
-#     eng_vocab,
-#     spacy_tokenizer_eng,
-#     rus_vocab,
-#     spacy_tokenizer_rus,
-#     device,
-# ):
-#     eng_list, rus_list = [], []
-#     for eng, rus in batch:
-#         eng_tensor = torch.tensor(
-#             get_transform(eng_vocab)(
-#                 [token.text for token in spacy_tokenizer_eng.tokenizer(eng)]
-#             ),
-#             device=device,
-#         )
-#         eng_list.append(eng_tensor)
-#         rus_tensor = torch.tensor(
-#             get_transform(rus_vocab)(
-#                 [token.text for token in spacy_tokenizer_rus.tokenizer(rus)]
-#             ),
-#             device=device,
-#         )
-#         rus_list.append(rus_tensor)
-
-#     return pad_sequence(
-#         eng_list, padding_value=eng_vocab["<pad>"]
-#     ), pad_sequence(rus_list, padding_value=rus_vocab["<pad>"])
-
-
 def showSomeTransformedSentences(eng, rus, eng_vocab, rus_vocab):
     """
     Function to show how the sentences look like after applying all transforms.
@@ -299,6 +263,78 @@ def epoch_time(start_time, end_time):
     elapsed_mins = int(elapsed_time / 60)
     elapsed_secs = int(elapsed_time - (elapsed_mins * 60))
     return elapsed_mins, elapsed_secs
+
+
+def translate_sentence_vectorized(
+    src_tensor, src_field, trg_field, model, device, max_len=50
+):
+    assert isinstance(src_tensor, torch.Tensor)
+
+    model.eval()
+    src_mask = model.make_src_mask(src_tensor)
+
+    with torch.no_grad():
+        enc_src = model.encoder(src_tensor, src_mask)
+    # enc_src = [batch_sz, src_len, hid_dim]
+
+    trg_indexes = [[trg_field["<sos>"]] for _ in range(len(src_tensor))]
+    # Even though some examples might have been completed by producing a <eos> token
+    # we still need to feed them through the model because other are not yet finished
+    # and all examples act as a batch. Once every single sentence prediction encounters
+    # <eos> token, then we can stop predicting.
+    translations_done = [0] * len(src_tensor)
+    for i in range(max_len):
+        trg_tensor = torch.LongTensor(trg_indexes).to(device)
+        trg_mask = model.make_trg_mask(trg_tensor)
+        with torch.no_grad():
+            output, attention = model.decoder(
+                trg_tensor, enc_src, trg_mask, src_mask
+            )
+        pred_tokens = output.argmax(2)[:, -1]
+        for i, pred_token_i in enumerate(pred_tokens):
+            trg_indexes[i].append(pred_token_i)
+            if pred_token_i == trg_field["<eos>"]:
+                translations_done[i] = 1
+        if all(translations_done):
+            break
+
+    # Iterate through each predicted example one by one;
+    # Cut-off the portion including the after the <eos> token
+    pred_sentences = []
+    for trg_sentence in trg_indexes:
+        pred_sentence = []
+        for i in range(1, len(trg_sentence)):
+            if trg_sentence[i] == trg_field["<eos>"]:
+                break
+            pred_sentence.append(trg_field.get_itos()[trg_sentence[i]])
+        pred_sentences.append(pred_sentence)
+
+    return pred_sentences, attention
+
+
+def calculate_bleu(iterator, src_field, trg_field, model, device, max_len=50):
+    trgs = []
+    pred_trgs = []
+    with torch.no_grad():
+        for batch in iterator:
+            src = batch[1].T
+            trg = batch[0].T
+            _trgs = []
+            for sentence in trg:
+                tmp = []
+                # Start from the first token which skips the <start> token
+                for i in sentence[1:]:
+                    # Targets are padded. So stop appending as soon as a padding or eos token is encountered
+                    if i == trg_field["<eos>"] or i == trg_field["<pad>"]:
+                        break
+                    tmp.append(trg_field.get_itos()[i.cpu().item()])
+                _trgs.append([tmp])
+            trgs += _trgs
+            pred_trg, _ = translate_sentence_vectorized(
+                src, src_field, trg_field, model, device
+            )
+            pred_trgs += pred_trg
+    return pred_trgs, trgs, bleu_score(pred_trgs, trgs) * 100
 
 
 @hydra.main(version_base="1.3.2", config_path="../config", config_name="config")
@@ -498,8 +534,16 @@ def main(cfg: Params):
         f"| Test Loss: {test_loss:.3f} | Test PPL: {math.exp(test_loss):7.3f} |"
     )
 
-    # print("fit...")
-    # class_estimator.fit(X_train, y_train)
+    pred_trgs, trgs, bleu_s = calculate_bleu(
+        test_dataloader, rus_vocab, eng_vocab, model, device
+    )
+    print(f"BLEU score on test data: {bleu_s}")
+
+    with open("results/sources.txt", "w", encoding="utf-8") as f:
+        f.writelines(f"{' '.join(sentence[0])}\n" for sentence in trgs)
+
+    with open("results/translations.txt", "w", encoding="utf-8") as f:
+        f.writelines(f"{' '.join(sentence)}\n" for sentence in pred_trgs)
 
     # with open(cfg.model.path, "wb") as f:
     #     pickle.dump(class_estimator, f)
