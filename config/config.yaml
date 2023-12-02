@@ -1,11 +1,27 @@
 model:
-  path: "models\\data.pickle"
+  path: "models/model.pt"
+  hid_dim: 64     
+  enc_layers: 1  
+  dec_layers: 1  
+  enc_heads: 1   
+  dec_heads: 1   
+  enc_pf_dim: 64 
+  dec_pf_dim: 64 
+  enc_dropout: 0.1  
+  dec_dropout: 0.1  
 
 train:
-  criterion_name: "entropy"
-  max_depth: 10
   random_state: 42 # or null for None
+  path_to_dataset: "data/data.txt"
+  batch_size: 128
+  learning_rate: 0.0005
+  n_epochs: 2
+  clip_grad: 1.0
+  # criterion_name: "entropy"
+  # max_depth: 10
+
 
 infer:
-  result_csv_path: "results\\result.csv"
-  criterion_name: "${train.criterion_name}"
+  random_state: 42 # or null for None
+  # result_csv_path: "results\\result.csv"
+  # criterion_name: "${train.criterion_name}"

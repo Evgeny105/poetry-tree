@@ -3,3 +3,4 @@ poetry_tree/main.py
 data.pickle
 .venv/*
 outputs/*
+.vscode/*
