@@ -1,14 +1,14 @@
 model:
   path: "models/model.pt"
-  hid_dim: 64     
-  enc_layers: 1  
-  dec_layers: 1  
-  enc_heads: 1   
-  dec_heads: 1   
-  enc_pf_dim: 64 
-  dec_pf_dim: 64 
-  enc_dropout: 0.1  
-  dec_dropout: 0.1  
+  hid_dim: 64
+  enc_layers: 1
+  dec_layers: 1
+  enc_heads: 1
+  dec_heads: 1
+  enc_pf_dim: 64
+  dec_pf_dim: 64
+  enc_dropout: 0.1
+  dec_dropout: 0.1
 
 train:
   random_state: 42 # or null for None
@@ -19,7 +19,6 @@ train:
   clip_grad: 1.0
   # criterion_name: "entropy"
   # max_depth: 10
-
 
 infer:
   random_state: 42 # or null for None

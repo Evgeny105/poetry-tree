@@ -1,26 +1,31 @@
 # import logging
-import pickle
+# import pickle
 
-import hydra
-from hydra.core.config_store import ConfigStore
-from sklearn.datasets import load_digits
-from sklearn.model_selection import train_test_split
-import torchdata.datapipes as dp
-import torchtext.transforms as T
-import spacy
-from spacy_download import load_spacy
 import math
 import random
-import time
 import sys
+import time
+
+import hydra
+import spacy
 import torch
 import torch.nn as nn
+
+# from sklearn.datasets import load_digits
+# from sklearn.model_selection import train_test_split
+import torchdata.datapipes as dp
+import torchtext.transforms as T
+from hydra.core.config_store import ConfigStore
+from spacy_download import load_spacy
 from torch.nn.utils.rnn import pad_sequence
-from torch.utils.data import Sampler, DataLoader
-from torchtext.data.metrics import bleu_score
+from torch.utils.data import DataLoader, Sampler
+
+# from torchtext.data.metrics import bleu_score
 from torchtext.vocab import build_vocab_from_iterator
-from tree import DecisionTree
-from transformer import Encoder, Decoder, Seq2Seq
+
+# from tree import DecisionTree
+from transformer import Decoder, Encoder, Seq2Seq
+
 
 # try:
 #     from .tree import DecisionTree
@@ -62,12 +67,12 @@ def get_transform(vocab):
     of tokens.
     """
     text_tranform = T.Sequential(
-        ## converts the sentences to indices based on given vocabulary
+        # converts the sentences to indices based on given vocabulary
         T.VocabTransform(vocab=vocab),
-        ## Add <sos> at beginning of each sentence. 1 because the index for <sos> in vocabulary is
+        # Add <sos> at beginning of each sentence. 1 because the index for <sos> in vocabulary is
         # 1 as seen in previous section
         T.AddToken(vocab["<sos>"], begin=True),
-        ## Add <eos> at beginning of each sentence. 2 because the index for <eos> in vocabulary is
+        # Add <eos> at beginning of each sentence. 2 because the index for <eos> in vocabulary is
         # 2 as seen in previous section
         T.AddToken(vocab["<eos>"], begin=False),
     )
@@ -449,10 +454,10 @@ def main(cfg: Params):
         enc, dec, rus_vocab["<pad>"], eng_vocab["<pad>"], device
     ).to(device)
 
-    # num_parameters = sum(
-    #     p.numel() for p in model.parameters() if p.requires_grad
-    # )
-    # print(f"The model has {num_parameters:,} trainable parameters")
+    num_parameters = sum(
+        p.numel() for p in model.parameters() if p.requires_grad
+    )
+    print(f"The model has {num_parameters:,} trainable parameters")
 
     model.apply(initialize_weights)
 
