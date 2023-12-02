@@ -27,10 +27,10 @@ repos:
           ["--ignore=E203,E501,W503"]
           # additional_dependencies: [flake8-bugbear]
 
-  # - repo: https://github.com/pre-commit/mirrors-prettier
-  #   rev: v4.0.0-alpha.3
-  #   hooks:
-  #     - id: prettier
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v3.0.3
+    hooks:
+      - id: prettier
   - repo: https://github.com/iterative/dvc
     rev: 3.30.3
     hooks:
