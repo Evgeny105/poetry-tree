@@ -33,9 +33,6 @@ from poetry_tree.transformer import Decoder, Encoder, Seq2Seq
 #     except ImportError:
 #         from poetry_tree.config import Params
 
-cs = ConfigStore.instance()
-cs.store(name="params", node=Params)
-
 
 def remove_attribution(row: tuple) -> tuple:
     """
@@ -337,8 +334,13 @@ def calculate_bleu(iterator, src_field, trg_field, model, device, max_len=50):
     return pred_trgs, trgs, bleu_score(pred_trgs, trgs) * 100
 
 
+cs = ConfigStore.instance()
+cs.store(name="params", node=Params)
+
+
 @hydra.main(version_base="1.3.2", config_path="../config", config_name="config")
 def main(cfg: Params):
+    print("TRAIN")
     if cfg.train.random_state is not None:
         RANDOM_STATE = cfg.train.random_state
     else:

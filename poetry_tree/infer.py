@@ -18,9 +18,7 @@ cs = ConfigStore.instance()
 cs.store(name="params", node=Params)
 
 
-@hydra.main(
-    version_base="1.3.2", config_path="..\\config", config_name="config"
-)
+@hydra.main(version_base="1.3.2", config_path="../config", config_name="config")
 def main(cfg: Params):
     RANDOM_STATE = cfg.train.random_state
 
