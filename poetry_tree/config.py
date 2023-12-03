@@ -28,15 +28,11 @@ class Train:
     learning_rate: float
     n_epochs: int
     clip_grad: float
-    # criterion_name: str
-    # max_depth: int
 
 
 @dataclass
 class Infer:
     random_state: Optional[int]
-    # result_csv_path: str
-    # criterion_name: str
 
 
 @dataclass
