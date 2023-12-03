@@ -1,0 +1,5 @@
+outs:
+- md5: c7ca2e78fd6f737589c2d0d95fff1337
+  size: 177328
+  hash: md5
+  path: translations.txt

@@ -1,0 +1,5 @@
+outs:
+- md5: 57c7b651e492ce7eaab2a78be8b283c3
+  size: 64129
+  hash: md5
+  path: eng_vocab.pickle

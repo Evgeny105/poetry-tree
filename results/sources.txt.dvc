@@ -1,0 +1,5 @@
+outs:
+- md5: e7e117e3acc3483b98cd9397d1ad6df9
+  size: 215752
+  hash: md5
+  path: sources.txt

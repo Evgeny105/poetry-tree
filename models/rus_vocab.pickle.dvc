@@ -1,0 +1,5 @@
+outs:
+- md5: 7bf664df60690a10ca022c14f853cf00
+  size: 156470
+  hash: md5
+  path: rus_vocab.pickle

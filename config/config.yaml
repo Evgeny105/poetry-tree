@@ -1,5 +1,7 @@
 model:
   path: "models/model.pt"
+  path_to_rus_vocab: "models/rus_vocab.pickle"
+  path_to_eng_vocab: "models/eng_vocab.pickle"
   hid_dim: 64
   enc_layers: 1
   dec_layers: 1

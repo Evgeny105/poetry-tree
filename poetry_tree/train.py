@@ -1,7 +1,6 @@
 # import logging
-# import pickle
-
 import math
+import pickle
 import random
 import sys
 import time
@@ -19,19 +18,8 @@ from torch.utils.data import DataLoader, Sampler
 from torchtext.data.metrics import bleu_score
 from torchtext.vocab import build_vocab_from_iterator
 
-from poetry_tree.config import Params  # работает при запуске train.py
-
-# работает при запуске train.py
+from poetry_tree.config import Params
 from poetry_tree.transformer import Decoder, Encoder, Seq2Seq
-
-
-# try:
-#     from config import Params
-# except ImportError:
-#     try:
-#         from .config import Params
-#     except ImportError:
-#         from poetry_tree.config import Params
 
 
 def remove_attribution(row: tuple) -> tuple:
@@ -340,7 +328,6 @@ cs.store(name="params", node=Params)
 
 @hydra.main(version_base="1.3.2", config_path="../config", config_name="config")
 def main(cfg: Params):
-    print("TRAIN")
     if cfg.train.random_state is not None:
         RANDOM_STATE = cfg.train.random_state
     else:
@@ -389,6 +376,11 @@ def main(cfg: Params):
         special_first=True,
     )
     rus_vocab.set_default_index(rus_vocab["<unk>"])
+
+    with open(cfg.model.path_to_eng_vocab, "wb") as f:
+        pickle.dump(eng_vocab, f)
+    with open(cfg.model.path_to_rus_vocab, "wb") as f:
+        pickle.dump(rus_vocab, f)
 
     BATCH_SIZE = cfg.train.batch_size
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -546,9 +538,6 @@ def main(cfg: Params):
 
     with open("results/translations.txt", "w", encoding="utf-8") as f:
         f.writelines(f"{' '.join(sentence)}\n" for sentence in pred_trgs)
-
-    # with open(cfg.model.path, "wb") as f:
-    #     pickle.dump(class_estimator, f)
 
 
 if __name__ == "__main__":

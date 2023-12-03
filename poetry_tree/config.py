@@ -5,6 +5,8 @@ from typing import Optional
 @dataclass
 class Model:
     path: str
+    path_to_rus_vocab: str
+    path_to_eng_vocab: str
     hid_dim: int
     enc_layers: int
     dec_layers: int
