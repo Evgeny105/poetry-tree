@@ -1,26 +1,8 @@
-# import math
-# import pickle
-# import random
-# import sys
-# import time
-# from datetime import datetime
-# import git
-# import mlflow
-# import mlflow.onnx
-# import numpy as np
-# import onnx
-# import onnxruntime
-# import spacy
-# import torch.nn as nn
-# import torchdata.datapipes as dp
-# import torchtext.transforms as T
-# from spacy_download import load_spacy
-# from torch.nn.utils.rnn import pad_sequence
-# from torch.utils.data import DataLoader, Sampler
-# from torchtext.vocab import build_vocab_from_iterator
-# from poetry_tree.transformer import Decoder, Encoder, Seq2Seq
+import pickle
+
 import dvc.api
 import hydra
+import numpy as np
 import onnxruntime
 import torch
 import torch.onnx
@@ -41,26 +23,45 @@ def main(cfg: Params):
             providers=["CPUExecutionProvider"],
         )
 
-    input_onnx_src = torch.zeros(1, 50, dtype=torch.int)
+    input_onnx_src = torch.ones(1, 50, dtype=torch.int)
     # фраза для перевода:
-    # <sos> предоставляются полотенца . <eos>
+    print("Request for model: \n<sos> предоставляются полотенца . <eos>")
     input_onnx_src[0, :5] = torch.tensor([2, 81, 219, 4, 3], dtype=torch.int)
 
-    input_onnx_trg = torch.zeros(1, 50, dtype=torch.int)
+    input_onnx_trg = torch.ones(1, 50, dtype=torch.int)
     # стартовый токен для начала генерации:
     # <sos>
-    input_onnx_trg[0, :1] = torch.tensor([2], dtype=torch.int)
+    input_onnx_trg[0, 0] = torch.tensor([2], dtype=torch.int)
 
-    outputs, _ = ort_session.run(
-        None,
-        {
-            "source": input_onnx_src.numpy(),
-            "target": input_onnx_trg.numpy(),
-        },
-    )
-    # with dvc.api.open(cfg.model.path_to_eng_vocab, mode="rb") as f:
-    #     eng_vocab = pickle.load(f)
-    print("Model output:", outputs)
+    with dvc.api.open(cfg.model.path_to_eng_vocab, mode="rb") as f:
+        eng_vocab = pickle.load(f)
+
+    print("Answer of model:")
+    words = ["<sos>"]
+    for i in range(50):
+        outputs, _ = ort_session.run(
+            None,
+            {
+                "source": input_onnx_src.numpy(),
+                "target": input_onnx_trg.numpy(),
+            },
+        )
+        token = np.argmax(outputs[0, i, :])
+        words.append(eng_vocab.get_itos()[token])
+
+        if token == eng_vocab["<eos>"]:
+            break
+
+        input_onnx_trg[0, i + 1] = torch.tensor([token], dtype=torch.int)
+    print(" ".join(words))
+
+
+"""
+Request for model:
+<sos> предоставляются полотенца . <eos>
+Answer of model:
+<sos> towels are provided . <eos>
+"""
 
 
 if __name__ == "__main__":
