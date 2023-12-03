@@ -19,6 +19,7 @@
 # from torch.utils.data import DataLoader, Sampler
 # from torchtext.vocab import build_vocab_from_iterator
 # from poetry_tree.transformer import Decoder, Encoder, Seq2Seq
+import dvc.api
 import hydra
 import onnxruntime
 import torch
@@ -34,23 +35,32 @@ cs.store(name="params", node=Params)
 
 @hydra.main(version_base="1.3.2", config_path="../config", config_name="config")
 def main(cfg: Params):
-    ort_session = onnxruntime.InferenceSession(
-        cfg.model.path_onnx,
-        providers=["CPUExecutionProvider"],
-    )
+    with dvc.api.open(cfg.model.path_onnx, mode="rb") as f:
+        ort_session = onnxruntime.InferenceSession(
+            f.name,
+            providers=["CPUExecutionProvider"],
+        )
 
-    input_onnx_src = torch.randint(0, 100, (1, 50), dtype=torch.int)
-    input_onnx_trg = torch.randint(0, 100, (1, 50), dtype=torch.int)
+    input_onnx_src = torch.zeros(1, 50, dtype=torch.int)
+    # фраза для перевода:
+    # <sos> предоставляются полотенца . <eos>
+    input_onnx_src[0, :5] = torch.tensor([2, 81, 219, 4, 3], dtype=torch.int)
 
-    outputs, attention = ort_session.run(
+    input_onnx_trg = torch.zeros(1, 50, dtype=torch.int)
+    # стартовый токен для начала генерации:
+    # <sos>
+    input_onnx_trg[0, :1] = torch.tensor([2], dtype=torch.int)
+
+    outputs, _ = ort_session.run(
         None,
         {
-            "source": input_onnx_src.cpu().numpy(),
-            "target": input_onnx_trg.cpu().numpy(),
+            "source": input_onnx_src.numpy(),
+            "target": input_onnx_trg.numpy(),
         },
     )
-
-    print("Model output:", outputs, attention)
+    # with dvc.api.open(cfg.model.path_to_eng_vocab, mode="rb") as f:
+    #     eng_vocab = pickle.load(f)
+    print("Model output:", outputs)
 
 
 if __name__ == "__main__":
