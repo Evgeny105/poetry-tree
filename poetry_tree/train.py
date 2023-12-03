@@ -1,4 +1,3 @@
-# import logging
 import math
 import pickle
 import random
@@ -290,9 +289,9 @@ def main(cfg: Params):
 
     list_data_pipe = list(data_pipe)
     total_samples = len(list_data_pipe)
-    train_size = int(0.8 * total_samples)
-    val_size = int(0.15 * total_samples)
-    test_size = total_samples - train_size - val_size
+    train_size = int(0.8 * total_samples)  # 80%
+    val_size = int(0.15 * total_samples)  # 15%
+    test_size = total_samples - train_size - val_size  # остальные 5%
     train_dataset, val_dataset, _ = torch.utils.data.random_split(
         list_data_pipe,
         [train_size, val_size, test_size],
@@ -321,29 +320,7 @@ def main(cfg: Params):
 
     BATCH_SIZE = cfg.train.batch_size
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    """
-    # def collate_batch(batch):
-    #     eng_list, rus_list = [], []
-    #     for _eng, _rus in batch:
-    #         eng_tensor = torch.tensor(
-    #             get_transform(eng_vocab)(
-    #                 [token.text for token in eng.tokenizer(_eng)]
-    #             ),
-    #             device=device,
-    #         )
-    #         eng_list.append(eng_tensor)
-    #         rus_tensor = torch.tensor(
-    #             get_transform(rus_vocab)(
-    #                 [token.text for token in rus.tokenizer(_rus)]
-    #             ),
-    #             device=device,
-    #         )
-    #         rus_list.append(rus_tensor)
 
-    #     return pad_sequence(
-    #         eng_list, padding_value=eng_vocab["<pad>"]
-    #     ), pad_sequence(rus_list, padding_value=rus_vocab["<pad>"])
-    """
     my_collator = collate_batch(
         eng_vocab=eng_vocab,
         spacy_tokenizer_eng=eng,
@@ -427,7 +404,7 @@ def main(cfg: Params):
     mlflow.set_experiment(
         "Train model " + str(datetime.now()).replace(":", "-")
     )
-    # model.load_state_dict(torch.load(cfg.model.path))  ############### EPOCH 1!!
+
     with mlflow.start_run():
         mlflow.log_params(
             {
