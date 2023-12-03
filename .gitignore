@@ -4,3 +4,5 @@ data.pickle
 .venv/*
 outputs/*
 .vscode/*
+mlruns/*
+mlartifacts/*

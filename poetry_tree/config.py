@@ -5,6 +5,7 @@ from typing import Optional
 @dataclass
 class Model:
     path: str
+    path_onnx: str
     path_to_rus_vocab: str
     path_to_eng_vocab: str
     hid_dim: int
@@ -20,6 +21,7 @@ class Model:
 
 @dataclass
 class Train:
+    mlflow_uri: str
     random_state: Optional[int]
     path_to_dataset: str
     batch_size: int

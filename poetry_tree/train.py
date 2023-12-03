@@ -4,18 +4,22 @@ import pickle
 import random
 import sys
 import time
+from datetime import datetime
 
+import git
 import hydra
+import mlflow
+import onnx
 import spacy
 import torch
 import torch.nn as nn
+import torch.onnx
 import torchdata.datapipes as dp
 import torchtext.transforms as T
 from hydra.core.config_store import ConfigStore
 from spacy_download import load_spacy
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader, Sampler
-from torchtext.data.metrics import bleu_score
 from torchtext.vocab import build_vocab_from_iterator
 
 from poetry_tree.config import Params
@@ -180,7 +184,7 @@ def train(model, iterator, optimizer, criterion, clip):
     model.train()
 
     epoch_loss = 0
-
+    history_loss = 0
     for i, batch in enumerate(iterator):
         src = batch[1].T
         trg = batch[0].T
@@ -209,6 +213,11 @@ def train(model, iterator, optimizer, criterion, clip):
         optimizer.step()
 
         epoch_loss += loss.item()
+
+        history_loss += loss.cpu().data.numpy().item()
+        if (i + 1) % 10 == 0:
+            mlflow.log_metric("Train Loss", history_loss / 10)
+            history_loss = 0
 
     return epoch_loss / len(iterator)
 
@@ -250,78 +259,6 @@ def epoch_time(start_time, end_time):
     return elapsed_mins, elapsed_secs
 
 
-def translate_sentence_vectorized(
-    src_tensor, src_field, trg_field, model, device, max_len=50
-):
-    assert isinstance(src_tensor, torch.Tensor)
-
-    model.eval()
-    src_mask = model.make_src_mask(src_tensor)
-
-    with torch.no_grad():
-        enc_src = model.encoder(src_tensor, src_mask)
-    # enc_src = [batch_sz, src_len, hid_dim]
-
-    trg_indexes = [[trg_field["<sos>"]] for _ in range(len(src_tensor))]
-    # Even though some examples might have been completed by producing a <eos> token
-    # we still need to feed them through the model because other are not yet finished
-    # and all examples act as a batch. Once every single sentence prediction encounters
-    # <eos> token, then we can stop predicting.
-    translations_done = [0] * len(src_tensor)
-    for i in range(max_len):
-        trg_tensor = torch.LongTensor(trg_indexes).to(device)
-        trg_mask = model.make_trg_mask(trg_tensor)
-        with torch.no_grad():
-            output, attention = model.decoder(
-                trg_tensor, enc_src, trg_mask, src_mask
-            )
-        pred_tokens = output.argmax(2)[:, -1]
-        for i, pred_token_i in enumerate(pred_tokens):
-            trg_indexes[i].append(pred_token_i)
-            if pred_token_i == trg_field["<eos>"]:
-                translations_done[i] = 1
-        if all(translations_done):
-            break
-
-    # Iterate through each predicted example one by one;
-    # Cut-off the portion including the after the <eos> token
-    pred_sentences = []
-    for trg_sentence in trg_indexes:
-        pred_sentence = []
-        for i in range(1, len(trg_sentence)):
-            if trg_sentence[i] == trg_field["<eos>"]:
-                break
-            pred_sentence.append(trg_field.get_itos()[trg_sentence[i]])
-        pred_sentences.append(pred_sentence)
-
-    return pred_sentences, attention
-
-
-def calculate_bleu(iterator, src_field, trg_field, model, device, max_len=50):
-    trgs = []
-    pred_trgs = []
-    with torch.no_grad():
-        for batch in iterator:
-            src = batch[1].T
-            trg = batch[0].T
-            _trgs = []
-            for sentence in trg:
-                tmp = []
-                # Start from the first token which skips the <start> token
-                for i in sentence[1:]:
-                    # Targets are padded. So stop appending as soon as a padding or eos token is encountered
-                    if i == trg_field["<eos>"] or i == trg_field["<pad>"]:
-                        break
-                    tmp.append(trg_field.get_itos()[i.cpu().item()])
-                _trgs.append([tmp])
-            trgs += _trgs
-            pred_trg, _ = translate_sentence_vectorized(
-                src, src_field, trg_field, model, device
-            )
-            pred_trgs += pred_trg
-    return pred_trgs, trgs, bleu_score(pred_trgs, trgs) * 100
-
-
 cs = ConfigStore.instance()
 cs.store(name="params", node=Params)
 
@@ -356,7 +293,7 @@ def main(cfg: Params):
     train_size = int(0.8 * total_samples)
     val_size = int(0.15 * total_samples)
     test_size = total_samples - train_size - val_size
-    train_dataset, val_dataset, test_dataset = torch.utils.data.random_split(
+    train_dataset, val_dataset, _ = torch.utils.data.random_split(
         list_data_pipe,
         [train_size, val_size, test_size],
     )
@@ -418,7 +355,10 @@ def main(cfg: Params):
     train_dataloader = DataLoader(
         train_dataset,
         batch_sampler=BatchSamplerSimilarLength(
-            dataset=train_dataset, batch_size=BATCH_SIZE, spacy_tokenizer=rus
+            dataset=train_dataset,
+            batch_size=BATCH_SIZE,
+            spacy_tokenizer=rus,
+            shuffle=True,
         ),
         collate_fn=my_collator,
     )
@@ -426,27 +366,13 @@ def main(cfg: Params):
     val_dataloader = DataLoader(
         val_dataset,
         batch_sampler=BatchSamplerSimilarLength(
-            dataset=val_dataset, batch_size=BATCH_SIZE, spacy_tokenizer=rus
+            dataset=val_dataset,
+            batch_size=BATCH_SIZE,
+            spacy_tokenizer=rus,
+            shuffle=False,
         ),
         collate_fn=my_collator,
     )
-
-    test_dataloader = DataLoader(
-        test_dataset,
-        batch_sampler=BatchSamplerSimilarLength(
-            dataset=test_dataset, batch_size=BATCH_SIZE, spacy_tokenizer=rus
-        ),
-        collate_fn=my_collator,
-    )
-
-    # for batch in train_dataloader:
-    #     eng_batch, rus_batch = batch
-    #     showSomeTransformedSentences(
-    #         eng_batch[:, 0], rus_batch[:, 0], eng_vocab, rus_vocab
-    #     )
-
-    # source_index_to_string = rus_vocab.get_itos()
-    # target_index_to_string = eng_vocab.get_itos()
 
     INPUT_DIM = len(rus_vocab)
     OUTPUT_DIM = len(eng_vocab)
@@ -497,47 +423,73 @@ def main(cfg: Params):
     N_EPOCHS = cfg.train.n_epochs
     CLIP = cfg.train.clip_grad
 
-    best_valid_loss = float("inf")
-    for epoch in range(N_EPOCHS):
-        start_time = time.time()
-
-        train_loss = train(model, train_dataloader, optimizer, criterion, CLIP)
-        valid_loss = evaluate(model, val_dataloader, criterion)
-
-        end_time = time.time()
-
-        epoch_mins, epoch_secs = epoch_time(start_time, end_time)
-
-        if valid_loss < best_valid_loss:
-            best_valid_loss = valid_loss
-            torch.save(model.state_dict(), cfg.model.path)
-
-        print(f"Epoch: {epoch+1:02} | Time: {epoch_mins}m {epoch_secs}s")
-        print(
-            f"\tTrain Loss: {train_loss:.3f} | Train PPL: {math.exp(train_loss):7.3f}"
-        )
-        print(
-            f"\t Val. Loss: {valid_loss:.3f} |  Val. PPL: {math.exp(valid_loss):7.3f}"
-        )
-
-    model.load_state_dict(torch.load(cfg.model.path))
-
-    test_loss = evaluate(model, test_dataloader, criterion)
-
-    print(
-        f"| Test Loss: {test_loss:.3f} | Test PPL: {math.exp(test_loss):7.3f} |"
+    mlflow.set_tracking_uri(uri=cfg.train.mlflow_uri)
+    mlflow.set_experiment(
+        "Train model " + str(datetime.now()).replace(":", "-")
     )
+    # model.load_state_dict(torch.load(cfg.model.path))  ############### EPOCH 1!!
+    with mlflow.start_run():
+        mlflow.log_params(
+            {
+                "input_dim": INPUT_DIM,
+                "output_dim": OUTPUT_DIM,
+                "random_seed_of_session": RANDOM_STATE,
+            }
+        )
+        mlflow.log_params(cfg)
+        repo = git.Repo(search_parent_directories=True)
+        mlflow.set_tag("Git commit ID", str(repo.head.object.hexsha))
 
-    pred_trgs, trgs, bleu_s = calculate_bleu(
-        test_dataloader, rus_vocab, eng_vocab, model, device
-    )
-    print(f"BLEU score on test data: {bleu_s}")
+        best_valid_loss = float("inf")
+        for epoch in range(N_EPOCHS):
+            start_time = time.time()
 
-    with open("results/sources.txt", "w", encoding="utf-8") as f:
-        f.writelines(f"{' '.join(sentence[0])}\n" for sentence in trgs)
+            train_loss = train(
+                model, train_dataloader, optimizer, criterion, CLIP
+            )
+            valid_loss = evaluate(model, val_dataloader, criterion)
 
-    with open("results/translations.txt", "w", encoding="utf-8") as f:
-        f.writelines(f"{' '.join(sentence)}\n" for sentence in pred_trgs)
+            end_time = time.time()
+
+            epoch_mins, epoch_secs = epoch_time(start_time, end_time)
+
+            if valid_loss < best_valid_loss:
+                best_valid_loss = valid_loss
+                torch.save(model.state_dict(), cfg.model.path)
+
+            print(f"Epoch: {epoch+1:02} | Time: {epoch_mins}m {epoch_secs}s")
+            print(
+                f"\tTrain Loss: {train_loss:.3f} | Train PPL: {math.exp(train_loss):7.3f}"
+            )
+            print(
+                f"\t Val. Loss: {valid_loss:.3f} |  Val. PPL: {math.exp(valid_loss):7.3f}"
+            )
+
+            mlflow.log_metric("Validation Loss", valid_loss)
+            mlflow.log_metric("Train PPL", math.exp(train_loss))
+            mlflow.log_metric("Validation PPL", math.exp(valid_loss))
+
+        model.load_state_dict(torch.load(cfg.model.path))
+        model.eval()
+        input_onnx_src = torch.randint(
+            0, INPUT_DIM, (1, 50), device=device, dtype=torch.int
+        )
+        input_onnx_trg = torch.randint(
+            0, OUTPUT_DIM, (1, 50), device=device, dtype=torch.int
+        )
+        example_output, example_attention = model(
+            input_onnx_src, input_onnx_trg
+        )
+        torch.onnx.export(
+            model,
+            args=(input_onnx_src, input_onnx_trg),
+            f=cfg.model.path_onnx,
+            verbose=True,
+            input_names=["source", "target"],
+            output_names=["output", "attention"],
+        )
+        onnx_model = onnx.load(cfg.model.path_onnx)
+        mlflow.onnx.log_model(onnx_model=onnx_model, artifact_path="models")
 
 
 if __name__ == "__main__":

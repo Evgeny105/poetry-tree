@@ -1,5 +1,6 @@
 model:
   path: "models/model.pt"
+  path_onnx: "models/model.onnx"
   path_to_rus_vocab: "models/rus_vocab.pickle"
   path_to_eng_vocab: "models/eng_vocab.pickle"
   hid_dim: 64
@@ -13,6 +14,7 @@ model:
   dec_dropout: 0.1
 
 train:
+  mlflow_uri: "http://127.0.0.1:8080"
   random_state: 42 # or null for None
   path_to_dataset: "data/data.txt"
   batch_size: 128

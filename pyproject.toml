@@ -17,6 +17,11 @@ torchdata = {version = "0.7.0", source = "pytorch"}
 torchtext = {version = "0.16.0", source = "pytorch"}
 spacy = "^3.7.2"
 spacy-download = "^1.1.0"
+mlflow = "^2.8.1"
+gitpython = "^3.1.40"
+onnx = "^1.15.0"
+onnxruntime = "^1.16.3"
+onnxscript = "^0.1.0.dev20231203"
 
 [tool.poetry.group.dev.dependencies]
 flake8 = "^6.1.0"

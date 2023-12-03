@@ -12,10 +12,6 @@ import torch.nn as nn
 import torchdata.datapipes as dp
 import torchtext.transforms as T
 from hydra.core.config_store import ConfigStore
-
-# from sklearn.datasets import load_digits
-# from sklearn.metrics import accuracy_score
-# from sklearn.model_selection import train_test_split
 from spacy_download import load_spacy
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader, Sampler
@@ -23,18 +19,6 @@ from torchtext.data.metrics import bleu_score
 
 from poetry_tree.config import Params
 from poetry_tree.transformer import Decoder, Encoder, Seq2Seq
-
-
-# import time
-
-
-# from torchtext.vocab import build_vocab_from_iterator
-
-
-# try:
-#     from .config import Params
-# except ImportError:
-#     from poetry_tree.config import Params
 
 
 def remove_attribution(row: tuple) -> tuple:
@@ -318,7 +302,10 @@ def main(cfg: Params):
     test_dataloader = DataLoader(
         test_dataset,
         batch_sampler=BatchSamplerSimilarLength(
-            dataset=test_dataset, batch_size=BATCH_SIZE, spacy_tokenizer=rus
+            dataset=test_dataset,
+            batch_size=BATCH_SIZE,
+            spacy_tokenizer=rus,
+            shuffle=False,
         ),
         collate_fn=my_collator,
     )
