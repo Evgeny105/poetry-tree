@@ -1,0 +1,64 @@
+name: "ensemble-onnx"
+platform: "ensemble"
+
+input [
+    {
+        name: "TEXTS_SOURCE"
+        data_type: TYPE_STRING
+        dims: [ -1 ]
+    },
+    {
+        name: "TEXTS_TARGET"
+        data_type: TYPE_STRING
+        dims: [ -1 ]
+    }
+]
+
+output [
+    {
+        name: "output"
+        data_type: TYPE_FP32
+        dims: [ -1, 6774 ]
+    }
+]
+
+ensemble_scheduling {
+    step [
+        {
+            model_name: "python-tokenizer"
+            model_version: -1
+            input_map {
+                key: "TEXTS_SOURCE"
+                value: "TEXTS_SOURCE"
+            }
+            input_map {
+                key: "TEXTS_TARGET"
+                value: "TEXTS_TARGET"
+            }
+            output_map {
+                key: "source"
+                value: "source"
+            }
+            output_map {
+                key: "target"
+                value: "target"
+            }
+        },
+        {
+            model_name: "onnx-model"
+            model_version: -1
+            input_map {
+                key: "source"
+                value: "source"
+            }
+            input_map {
+                key: "target"
+                value: "target"
+            }
+            output_map {
+                key: "output"
+                value: "output"
+            }
+        }
+    ]
+}

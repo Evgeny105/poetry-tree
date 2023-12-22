@@ -7,3 +7,4 @@ outputs/*
 mlruns/*
 mlartifacts/*
 Start *.txt
+model_repository/python-tokenizer/1/__pycache__/*
