@@ -8,7 +8,12 @@ import torch
 import torch.onnx
 from hydra.core.config_store import ConfigStore
 
-from poetry_tree.config import Params
+
+# from poetry_tree.config import Params
+try:
+    from poetry_tree.config import Params
+except ImportError:
+    from config import Params
 
 
 cs = ConfigStore.instance()
@@ -46,7 +51,7 @@ def main(cfg: Params):
                 "target": input_onnx_trg.numpy(),
             },
         )
-        token = np.argmax(outputs[0, i, :])
+        token = np.argmax(outputs[0][0, i, :])
         words.append(eng_vocab.get_itos()[token])
 
         if token == eng_vocab["<eos>"]:
@@ -56,13 +61,12 @@ def main(cfg: Params):
     print(" ".join(words))
 
 
+if __name__ == "__main__":
+    main()
+
 """
 Request for model:
 <sos> предоставляются полотенца . <eos>
 Answer of model:
 <sos> towels are provided . <eos>
 """
-
-
-if __name__ == "__main__":
-    main()

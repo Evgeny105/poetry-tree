@@ -81,7 +81,7 @@ class EncoderLayer(nn.Module):
         # src_mask = [batch size, 1, 1, src len]
 
         # self attention
-        _src, _ = self.self_attention(src, src, src, src_mask)
+        _src = self.self_attention(src, src, src, src_mask)
 
         # dropout, residual connection and layer norm
         src = self.self_attn_layer_norm(src + self.dropout(_src))
@@ -295,7 +295,7 @@ class DecoderLayer(nn.Module):
         # src_mask = [batch size, 1, 1, src len]
 
         # self attention
-        _trg, _ = self.self_attention(trg, trg, trg, trg_mask)
+        _trg = self.self_attention(trg, trg, trg, trg_mask)
 
         # dropout, residual connection and layer norm
         trg = self.self_attn_layer_norm(trg + self.dropout(_trg))

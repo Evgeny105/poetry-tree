@@ -8,9 +8,9 @@ from datetime import datetime
 import git
 import hydra
 import mlflow
-import numpy as np  # FIXME
+import numpy as np
 import onnx
-import onnxruntime as ort  # FIXME
+import onnxruntime as ort
 import spacy
 import torch
 import torch.nn as nn
@@ -23,8 +23,18 @@ from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader, Sampler
 from torchtext.vocab import build_vocab_from_iterator
 
-from poetry_tree.config import Params
-from poetry_tree.transformer import Decoder, Encoder, Seq2Seq
+
+# from poetry_tree.config import Params
+try:
+    from poetry_tree.config import Params
+except ImportError:
+    from config import Params
+
+# from poetry_tree.transformer import Decoder, Encoder, Seq2Seq
+try:
+    from poetry_tree.transformer import Decoder, Encoder, Seq2Seq
+except ImportError:
+    from transformer import Decoder, Encoder, Seq2Seq
 
 
 def remove_attribution(row: tuple) -> tuple:
@@ -456,12 +466,14 @@ def main(cfg: Params):
         input_onnx_trg = torch.randint(
             0, OUTPUT_DIM, (1, 50), device=device, dtype=torch.int
         )
-        example_output = model(input_onnx_src, input_onnx_trg).detach().numpy()
+        example_output = (
+            model(input_onnx_src, input_onnx_trg).detach().cpu().numpy()
+        )
         torch.onnx.export(
             model,
             args=(input_onnx_src, input_onnx_trg),
             f=cfg.model.path_onnx,
-            export_params=True,  # TODO протестить
+            export_params=True,
             verbose=True,
             input_names=["source", "target"],
             output_names=["output"],
@@ -472,10 +484,10 @@ def main(cfg: Params):
             },
         )
 
-        # Comparing ort and torch outputs # FIXME
+        # Comparing ort and torch outputs
         ort_inputs = {
-            "source": input_onnx_src.numpy(),
-            "target": input_onnx_trg.numpy(),
+            "source": input_onnx_src.cpu().numpy(),
+            "target": input_onnx_trg.cpu().numpy(),
         }
         ort_session = ort.InferenceSession(cfg.model.path_onnx)
         onnx_embeddings = ort_session.run(None, ort_inputs)

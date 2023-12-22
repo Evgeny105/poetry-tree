@@ -16,8 +16,18 @@ from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import DataLoader, Sampler
 from torchtext.data.metrics import bleu_score
 
-from poetry_tree.config import Params
-from poetry_tree.transformer import Decoder, Encoder, Seq2Seq
+
+# from poetry_tree.config import Params
+try:
+    from poetry_tree.config import Params
+except ImportError:
+    from config import Params
+
+# from poetry_tree.transformer import Decoder, Encoder, Seq2Seq
+try:
+    from poetry_tree.transformer import Decoder, Encoder, Seq2Seq
+except ImportError:
+    from transformer import Decoder, Encoder, Seq2Seq
 
 
 def remove_attribution(row: tuple) -> tuple:
@@ -193,9 +203,7 @@ def translate_sentence_vectorized(
         trg_tensor = torch.LongTensor(trg_indexes).to(device)
         trg_mask = model.make_trg_mask(trg_tensor)
         with torch.no_grad():
-            output, attention = model.decoder(
-                trg_tensor, enc_src, trg_mask, src_mask
-            )
+            output = model.decoder(trg_tensor, enc_src, trg_mask, src_mask)
         pred_tokens = output.argmax(2)[:, -1]
         for i, pred_token_i in enumerate(pred_tokens):
             trg_indexes[i].append(pred_token_i)
@@ -215,7 +223,7 @@ def translate_sentence_vectorized(
             pred_sentence.append(trg_field.get_itos()[trg_sentence[i]])
         pred_sentences.append(pred_sentence)
 
-    return pred_sentences, attention
+    return pred_sentences
 
 
 def calculate_bleu(iterator, src_field, trg_field, model, device, max_len=50):
@@ -236,7 +244,7 @@ def calculate_bleu(iterator, src_field, trg_field, model, device, max_len=50):
                     tmp.append(trg_field.get_itos()[i.cpu().item()])
                 _trgs.append([tmp])
             trgs += _trgs
-            pred_trg, _ = translate_sentence_vectorized(
+            pred_trg = translate_sentence_vectorized(
                 src, src_field, trg_field, model, device
             )
             pred_trgs += pred_trg
@@ -367,3 +375,8 @@ def main(cfg: Params):
 
 if __name__ == "__main__":
     main()
+
+"""
+Test Loss: 1.938    Test PPL:   6.947
+BLEU score on test data: 25.187282742580802
+"""
