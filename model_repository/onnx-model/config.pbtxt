@@ -1,2 +1,22 @@
 name: "onnx-model"
 platform: "onnxruntime_onnx"
+max_batch_size: 64
+
+input [
+    {
+        name: "source"
+        data_type: TYPE_INT32
+        dims: [ 50 ]
+    },
+    {
+        name: "target"
+        data_type: TYPE_INT32
+        dims: [ 50 ]
+    }
+]
+
+output [
+    {
+
+    }
+]

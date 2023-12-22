@@ -7,12 +7,10 @@ from datetime import datetime
 
 import git
 import hydra
-import mlflow  # mlflow server --host 127.0.0.1 --port 8080
-
-# import numpy as np #FIXME
+import mlflow
+import numpy as np  # FIXME
 import onnx
-
-# import onnxruntime as ort #FIXME
+import onnxruntime as ort  # FIXME
 import spacy
 import torch
 import torch.nn as nn
@@ -194,7 +192,7 @@ def train(model, iterator, optimizer, criterion, clip):
 
         optimizer.zero_grad()
 
-        output, _ = model(src, trg[:, :-1])
+        output = model(src, trg[:, :-1])
 
         # output = [batch size, trg len - 1, output dim]
         # trg = [batch size, trg len]
@@ -235,7 +233,7 @@ def evaluate(model, iterator, criterion):
             src = batch[1].T
             trg = batch[0].T
 
-            output, _ = model(src, trg[:, :-1])
+            output = model(src, trg[:, :-1])
 
             # output = [batch size, trg len - 1, output dim]
             # trg = [batch size, trg len]
@@ -458,35 +456,30 @@ def main(cfg: Params):
         input_onnx_trg = torch.randint(
             0, OUTPUT_DIM, (1, 50), device=device, dtype=torch.int
         )
-        example_output, example_attention = (
-            model(input_onnx_src, input_onnx_trg).detach().numpy()
-        )
+        example_output = model(input_onnx_src, input_onnx_trg).detach().numpy()
         torch.onnx.export(
             model,
             args=(input_onnx_src, input_onnx_trg),
             f=cfg.model.path_onnx,
-            # export_params=True, # TODO протестить
+            export_params=True,  # TODO протестить
             verbose=True,
             input_names=["source", "target"],
-            output_names=["output", "attention"],
-            # dynamic_axes={
-            #     "source": {0: "BATCH_SIZE"},
-            #     "target": {0: "BATCH_SIZE"},
-            #     "output": {0: "BATCH_SIZE"},
-            #     "attention": {0: "BATCH_SIZE"},
-            # },
+            output_names=["output"],
+            dynamic_axes={
+                "source": {0: "BATCH_SIZE"},
+                "target": {0: "BATCH_SIZE"},
+                "output": {0: "BATCH_SIZE"},
+            },
         )
 
         # Comparing ort and torch outputs # FIXME
-        # ort_inputs = {
-        #     "source": input_onnx_src.numpy(),
-        #     "target": input_onnx_trg.numpy(),
-        # }
-        # ort_session = ort.InferenceSession(cfg.model.path_onnx)
-        # onnx_embeddings = ort_session.run(None, ort_inputs)[0]
-        # assert np.allclose(
-        #     example_output, onnx_embeddings, atol=1e-5
-        # )
+        ort_inputs = {
+            "source": input_onnx_src.numpy(),
+            "target": input_onnx_trg.numpy(),
+        }
+        ort_session = ort.InferenceSession(cfg.model.path_onnx)
+        onnx_embeddings = ort_session.run(None, ort_inputs)
+        assert np.allclose(example_output, onnx_embeddings, atol=1e-5)
 
         onnx_model = onnx.load(cfg.model.path_onnx)
         mlflow.onnx.log_model(onnx_model=onnx_model, artifact_path="models")

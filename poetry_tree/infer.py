@@ -151,7 +151,7 @@ def evaluate(model, iterator, criterion):
             src = batch[1].T
             trg = batch[0].T
 
-            output, _ = model(src, trg[:, :-1])
+            output = model(src, trg[:, :-1])
 
             # output = [batch size, trg len - 1, output dim]
             # trg = [batch size, trg len]

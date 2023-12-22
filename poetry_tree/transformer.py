@@ -175,7 +175,7 @@ class MultiHeadAttentionLayer(nn.Module):
 
         # x = [batch size, query len, hid dim]
 
-        return x, attention
+        return x
 
 
 class PositionwiseFeedforwardLayer(nn.Module):
@@ -258,7 +258,7 @@ class Decoder(nn.Module):
         # trg = [batch size, trg len, hid dim]
 
         for layer in self.layers:
-            trg, attention = layer(trg, enc_src, trg_mask, src_mask)
+            trg = layer(trg, enc_src, trg_mask, src_mask)
 
         # trg = [batch size, trg len, hid dim]
         # attention = [batch size, n heads, trg len, src len]
@@ -267,7 +267,7 @@ class Decoder(nn.Module):
 
         # output = [batch size, trg len, output dim]
 
-        return output, attention
+        return output
 
 
 class DecoderLayer(nn.Module):
@@ -303,9 +303,7 @@ class DecoderLayer(nn.Module):
         # trg = [batch size, trg len, hid dim]
 
         # encoder attention
-        _trg, attention = self.encoder_attention(
-            trg, enc_src, enc_src, src_mask
-        )
+        _trg = self.encoder_attention(trg, enc_src, enc_src, src_mask)
 
         # dropout, residual connection and layer norm
         trg = self.enc_attn_layer_norm(trg + self.dropout(_trg))
@@ -321,7 +319,7 @@ class DecoderLayer(nn.Module):
         # trg = [batch size, trg len, hid dim]
         # attention = [batch size, n heads, trg len, src len]
 
-        return trg, attention
+        return trg
 
 
 class Seq2Seq(nn.Module):
@@ -378,9 +376,9 @@ class Seq2Seq(nn.Module):
 
         # enc_src = [batch size, src len, hid dim]
 
-        output, attention = self.decoder(trg, enc_src, trg_mask, src_mask)
+        output = self.decoder(trg, enc_src, trg_mask, src_mask)
 
         # output = [batch size, trg len, output dim]
         # attention = [batch size, n heads, trg len, src len]
 
-        return output, attention
+        return output

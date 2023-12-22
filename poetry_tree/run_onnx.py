@@ -39,7 +39,7 @@ def main(cfg: Params):
     print("Answer of model:")
     words = ["<sos>"]
     for i in range(50):
-        outputs, _ = ort_session.run(
+        outputs = ort_session.run(
             None,
             {
                 "source": input_onnx_src.numpy(),
