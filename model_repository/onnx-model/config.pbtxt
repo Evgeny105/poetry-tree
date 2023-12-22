@@ -1,12 +1,12 @@
 name: "onnx-model"
 platform: "onnxruntime_onnx"
-max_batch_size: 64
+max_batch_size: 4
 
 input [
     {
         name: "source"
         data_type: TYPE_INT32
-        dims: [ 50 ]
+        dims: [  50 ]
     },
     {
         name: "target"
@@ -17,6 +17,18 @@ input [
 
 output [
     {
-
+        name: "output"
+        data_type: TYPE_FP32
+        dims:[  -1, 6774 ]
     }
 ]
+
+instance_group [
+    {
+        count: 1
+        kind: KIND_GPU
+        gpus: [0]
+    }
+]
+
+dynamic_batching {}

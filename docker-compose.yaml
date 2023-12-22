@@ -1,9 +1,14 @@
 version: "3.8"
 services:
-  triton_hf_transformer_example:
-    command: ["--model-repository=/models", "--log-info=1"]
+  triton_transformer:
+    command:
+      [
+        "--model-repository=/models",
+        "--log-info=1",
+        "--min-supported-compute-capability=5.0",
+      ]
     build: .
-    shm_size: "4gb"
+    shm_size: "1gb"
     restart: unless-stopped
     ports:
       - 8500:8000
@@ -16,12 +21,12 @@ services:
     environment:
       - LC_ALL=C.UTF-8
       - LANG=C.UTF-8
-    # deploy:
-    #   resources:
-    #     limits:
-    #         cpus: '24'
-    #     reservations:
-    #       devices:
-    #       - driver: nvidia
-    #         device_ids: ['2']
-    #         capabilities: [gpu]
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["0"]
+              capabilities: [gpu]
