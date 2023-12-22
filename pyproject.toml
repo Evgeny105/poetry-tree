@@ -22,6 +22,7 @@ gitpython = "^3.1.40"
 onnx = "^1.15.0"
 onnxruntime = "^1.16.3"
 onnxscript = "^0.1.0.dev20231203"
+tritonclient = {extras = ["all"], version = "^2.41.0"}
 
 [tool.poetry.group.dev.dependencies]
 flake8 = "^6.1.0"

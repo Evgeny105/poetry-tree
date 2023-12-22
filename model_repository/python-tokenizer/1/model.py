@@ -15,7 +15,7 @@ class TritonPythonModel:
         self.eng = spacy.blank("en").from_disk("/assets/eng_tokenizer")
         self.rus = spacy.blank("ru").from_disk("/assets/rus_tokenizer")
 
-    def get_transform(vocab):
+    def get_transform(self, vocab):
         text_transform = T.Sequential(
             T.VocabTransform(vocab=vocab),
             T.AddToken(vocab["<sos>"], begin=True),
@@ -32,8 +32,9 @@ class TritonPythonModel:
             texts_target = pb_utils.get_input_tensor_by_name(
                 request, "TEXTS_TARGET"
             ).as_numpy()
-            texts_source = [el.decode() for el in texts_source]
-            texts_target = [el.decode() for el in texts_target]
+            texts_source = [el.decode() for el in texts_source][0].lower()
+            texts_target = [el.decode() for el in texts_target][0].lower()
+            # print(type(texts_source))  # FIXME
             words_source = [
                 token.text for token in self.rus.tokenizer(texts_source)
             ]
@@ -42,7 +43,9 @@ class TritonPythonModel:
             ]
             tokens_rus = self.get_transform(self.rus_vocab)(words_source)
             if len(words_target) == 0:
-                tokens_eng = self.eng_vocab["<sos>"]
+                tokens_eng = [
+                    self.eng_vocab["<sos>"],
+                ]
             else:
                 tokens_eng = self.get_transform(self.eng_vocab)(words_target)[
                     :-1
