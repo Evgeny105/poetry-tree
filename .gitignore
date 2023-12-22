@@ -6,3 +6,4 @@ outputs/*
 .vscode/*
 mlruns/*
 mlartifacts/*
+Start Docker.txt

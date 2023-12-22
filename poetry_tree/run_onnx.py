@@ -3,7 +3,7 @@ import pickle
 import dvc.api
 import hydra
 import numpy as np
-import onnxruntime
+import onnxruntime as rt
 import torch
 import torch.onnx
 from hydra.core.config_store import ConfigStore
@@ -18,7 +18,7 @@ cs.store(name="params", node=Params)
 @hydra.main(version_base="1.3.2", config_path="../config", config_name="config")
 def main(cfg: Params):
     with dvc.api.open(cfg.model.path_onnx, mode="rb") as f:
-        ort_session = onnxruntime.InferenceSession(
+        ort_session = rt.InferenceSession(
             f.name,
             providers=["CPUExecutionProvider"],
         )
