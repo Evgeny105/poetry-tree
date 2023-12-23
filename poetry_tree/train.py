@@ -329,8 +329,8 @@ def main(cfg: Params):
         pickle.dump(eng_vocab, f)
     with open(cfg.model.path_to_rus_vocab, "wb") as f:
         pickle.dump(rus_vocab, f)
-    eng.to_disk(cfg.model.path_to_eng_tokenizer)
-    rus.to_disk(cfg.model.path_to_rus_tokenizer)
+    # eng.to_disk(cfg.model.path_to_eng_tokenizer)
+    # rus.to_disk(cfg.model.path_to_rus_tokenizer)
 
     BATCH_SIZE = cfg.train.batch_size
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

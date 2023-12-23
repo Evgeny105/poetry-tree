@@ -8,8 +8,8 @@ class Model:
     path_onnx: str
     path_to_rus_vocab: str
     path_to_eng_vocab: str
-    path_to_rus_tokenizer: str
-    path_to_eng_tokenizer: str
+    # path_to_rus_tokenizer: str
+    # path_to_eng_tokenizer: str
     hid_dim: int
     enc_layers: int
     dec_layers: int
